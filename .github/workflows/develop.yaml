@@ -1,0 +1,40 @@
+name: develop workflow test
+
+on:
+  push:
+    branches: [ "develop" ]
+
+env: 
+  tf_version: 1.5.4
+  node_version : '20.x'
+
+jobs:
+  Lint:
+    runs-on: [self-hosted, runner01]
+    outputs:
+      output1: ${{ steps.get_dir.outputs.tf_region_dir }}
+    strategy:
+      fail-fast: true
+      max-parallel: 1
+      matrix:
+        tf_working_dir:
+          - develop
+    steps:
+      - name: Setup OS
+        run: |
+          yum install -y  curl unzip jq git
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.node_version }}
+      - uses: actions/checkout@v2
+      - uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: ${{ env.tf_version }}
+      - name: Terraform fmt
+        run: |
+          terraform fmt
+      - name: Get Terraform Directory
+        id: get_dir
+        shell: bash
+        run: |
+          cd ${{ matrix.tf_working_dir }}

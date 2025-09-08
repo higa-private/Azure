@@ -1,0 +1,5 @@
+*secret.tfvars
+*/secrets/*
+develop/.*
+*tfstate*
+*tfstate
