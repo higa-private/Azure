@@ -5,7 +5,7 @@ on:
     branches: ["develop"]
 
 env:
-  tf_version: 1.5.4
+  tf_version: "1.5.4"
   node_version: "20.x"
 
 jobs:
@@ -26,18 +26,25 @@ jobs:
         run: |
           sed -i -e 's/http/https/' /etc/apt/sources.list
           apt-get update && apt-get install -y less vim curl unzip sudo jq git
-      - uses: actions/setup-node@v3
+
+      - uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ env.node_version }}
-      - uses: actions/checkout@v2
-      - uses: hashicorp/setup-terraform@v1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
         with:
           terraform_version: ${{ env.tf_version }}
+
       - name: Terraform fmt
-        run: |
-          terraform fmt
+        run: terraform fmt -recursive
+
       - name: Get Terraform Directory
         id: get_dir
         shell: bash
         run: |
           cd ${{ matrix.tf_working_dir }}
+          echo "::set-output name=tf_region_dir::$(pwd)"
