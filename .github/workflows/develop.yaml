@@ -49,16 +49,11 @@ jobs:
           cd ${{ matrix.tf_working_dir }}
           echo "::set-output name=tf_region_dir::$(pwd)"
 
-      - name: Get Terraform Directory
-        id: get_dir
-        shell: bash
-        run: |
-          cd ${{ matrix.tf_working_dir }}
-          echo "::set-output name=tf_region_dir::$(pwd)"
       - name: Terraform Init
         run: |
           cd ${{ matrix.tf_working_dir }}/
           terraform init -upgrade
+
       - name: Terraform Plan
         run: |
           cd ${{ matrix.tf_working_dir }}/
