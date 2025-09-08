@@ -10,7 +10,7 @@ env:
 
 jobs:
   Lint:
-    runs-on: [self-hosted, Default]
+    runs-on: [self-hosted, Linux]
     outputs:
       output1: ${{ steps.get_dir.outputs.tf_region_dir }}
     strategy:
