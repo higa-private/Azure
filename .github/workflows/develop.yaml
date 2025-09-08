@@ -9,7 +9,7 @@ env:
   node_version: "20.x"
 
 jobs:
-  Lint:
+  Terraform Exec:
     runs-on: [self-hosted, Linux]
     container:
       image: docker.io/library/python:3.11-bullseye
@@ -48,3 +48,18 @@ jobs:
         run: |
           cd ${{ matrix.tf_working_dir }}
           echo "::set-output name=tf_region_dir::$(pwd)"
+
+      - name: Get Terraform Directory
+        id: get_dir
+        shell: bash
+        run: |
+          cd ${{ matrix.tf_working_dir }}
+          echo "::set-output name=tf_region_dir::$(pwd)"
+      - name: Terraform Init
+        run: |
+          cd ${{ matrix.tf_working_dir }}/
+          terraform init -upgrade
+      - name: Terraform Plan
+        run: |
+          cd ${{ matrix.tf_working_dir }}/
+          terraform plan --parallelism=50 -no-color
