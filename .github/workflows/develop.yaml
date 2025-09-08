@@ -24,7 +24,7 @@ jobs:
     steps:
       - name: Setup OS
         run: |
-          sed -i -e 's/http/https/' /etc/apt/sources.list
+          sed -i -e 's/http/https/' /etc/apt/sources.list.d/debian.sources
           apt-get update && apt-get install -y less vim curl unzip sudo jq git
 
       - uses: actions/checkout@v2
