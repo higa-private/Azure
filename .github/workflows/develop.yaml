@@ -12,7 +12,7 @@ jobs:
   Terraform_Exec:
     runs-on: [self-hosted, Linux]
     container:
-      image: docker.io/library/python:3.11-bullseye
+      image: docker.io/library/node:iron-trixie-slim
     outputs:
       output1: ${{ steps.get_dir.outputs.tf_region_dir }}
     strategy:
