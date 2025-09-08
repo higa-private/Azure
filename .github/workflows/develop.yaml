@@ -9,7 +9,7 @@ env:
   node_version: "20.x"
 
 jobs:
-  Terraform Exec:
+  Terraform_Exec:
     runs-on: [self-hosted, Linux]
     container:
       image: docker.io/library/python:3.11-bullseye
