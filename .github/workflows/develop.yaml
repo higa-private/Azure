@@ -11,6 +11,8 @@ env:
 jobs:
   Lint:
     runs-on: [self-hosted, Linux]
+    container:
+      image: docker.io/library/python:3.11-bullseye
     outputs:
       output1: ${{ steps.get_dir.outputs.tf_region_dir }}
     strategy:
@@ -22,7 +24,8 @@ jobs:
     steps:
       - name: Setup OS
         run: |
-          yum install -y  curl unzip jq git
+          sed -i -e 's/http/https/' /etc/apt/sources.list
+          apt-get update && apt-get install -y less vim curl unzip sudo jq git
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ env.node_version }}
