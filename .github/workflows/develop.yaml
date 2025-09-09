@@ -24,6 +24,8 @@ jobs:
     steps:
       - name: Setup OS
         run: |
+          apt-get update && apt-get install -y ca-certificates   # イメージ初期構築時にインストールするので、実際に不要
+
           sed -i -e 's/http/https/' /etc/apt/sources.list.d/debian.sources
           apt-get update && apt-get install -y less vim curl unzip sudo jq git
 
