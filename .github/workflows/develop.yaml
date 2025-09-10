@@ -7,6 +7,8 @@ on:
 env:
   tf_version: "1.5.4"
   node_version: "20.x"
+  key_vault: "terraform20250909"
+  secrets: "subscription-id tenant-id sp-client-id sp-client-secret nsg-inbound-ip nsg-outbound-ip"
 
 jobs:
   Terraform_Exec:
@@ -61,22 +63,29 @@ jobs:
         run: |
           az login --identity 1> /dev/null
 
-      - name: Get Key Vault Secret
-        id: kv
+      - name: Create Terraform tfvars from Key Vault
         run: |
-          for secret in subscription-id tenant-id sp-client-id sp-client-secret nsg-inbound-ip nsg-outbound-ip; do
+          TFVARS_FILE=credentials.auto.tfvars
+          echo "# Auto-generated from Key Vault" > $TFVARS_FILE
+
+          for secret in ${{ env.secrets }}; do
             value=$(az keyvault secret show \
-              --vault-name terraform20250909 \
+              --vault-name ${{ env.key_vault }} \
               --name "$secret" \
               --query value -o tsv)
-            # ハイフンをアンダースコアに置換して大文字化
-            varname=$(echo "$secret" | tr '[:lower:]-' '[:upper:]_')
+            varname=$(echo "$secret" | tr '[:lower:]-' '[:lower:]_')
             
-            echo "${varname}=$value" >> $GITHUB_ENV
-          done
+            echo "${varname} = \"${value}\"" >> $TFVARS_FILE
 
-      - name: Check Key Vault Secret
-        run: echo "SUBSCRIPTION_ID=${SUBSCRIPTION_ID}"
+            # 機密情報はマスク
+            if [[ "$varname" == "sp_client_secret" ]]; then
+              echo "::add-mask::$value"
+              echo "${varname} = *****"
+            else
+              echo "${varname} = ${value}"
+            fi
+          done
+        shell: bash
 
       - name: Terraform Plan
         run: |
