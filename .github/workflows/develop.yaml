@@ -64,7 +64,7 @@ jobs:
       - name: Get Key Vault Secret
         id: kv
         run: |
-            for secret in subscription-id tenant-id sp-client-id sp-client-secret nsg-inbound-ip nsg-outbound-ip; do
+          for secret in subscription-id tenant-id sp-client-id sp-client-secret nsg-inbound-ip nsg-outbound-ip; do
             value=$(az keyvault secret show \
               --vault-name terraform20250909 \
               --name "$secret" \
