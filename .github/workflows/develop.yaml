@@ -8,7 +8,8 @@ env:
   tf_version: "1.5.4"
   node_version: "20.x"
   key_vault: "terraform20250909"
-  secrets: "subscription-id tenant-id sp-client-id sp-client-secret nsg-inbound-ip nsg-outbound-ip"
+  provider_secrets: "subscription-id tenant-id sp-client-id sp-client-secret"
+  nsg_secrets: "nsg-inbound-ip nsg-outbound-ip"
 
 jobs:
   Terraform_Exec:
@@ -63,27 +64,31 @@ jobs:
         run: |
           az login --identity 1> /dev/null
 
-      - name: Create Terraform tfvars from Key Vault
+      - name: Create Terraform tfvars from Provider_Key Vault
         run: |
           TFVARS_FILE=credentials.auto.tfvars
-          echo "# Auto-generated from Key Vault" > $TFVARS_FILE
+          # provider_credentials ブロック開始
+          echo "provider_credentials = {" >> $TFVARS_FILE
 
-          for secret in ${{ env.secrets }}; do
-            value=$(az keyvault secret show \
+          for secret in ${{ env.provider_secrets }}; do
+            provider_value=$(az keyvault secret show \
               --vault-name ${{ env.key_vault }} \
               --name "$secret" \
               --query value -o tsv)
-            varname=$(echo "$secret" | tr '[:lower:]-' '[:lower:]_')
+            provider_varname=$(echo "$secret" | tr '[:lower:]-' '[:lower:]_')
             
-            echo "${varname} = \"${value}\"" >> $TFVARS_FILE
+            echo "${provider_varname} = \"${provider_value}\"" >> $TFVARS_FILE
+          done
+          echo "}" >> $TFVARS_FILE
 
-            # 機密情報はマスク
-            if [[ "$varname" == "sp_client_secret" ]]; then
-              echo "::add-mask::$value"
-              echo "${varname} = *****"
-            else
-              echo "${varname} = ${value}"
-            fi
+          # nsg_inbound_ip, nsg_outbound_ip 変数設定
+          for secret in ${{ env.nsg_secrets }}; do
+            nsg_value=$(az keyvault secret show \
+              --vault-name ${{ env.key_vault }} \
+              --name "$secret" \
+              --query value -o tsv)
+            nsg_varname=$(echo "$secret" | tr '[:lower:]-' '[:lower:]_')
+            echo "${nsg_varname} = \"${nsg_value}\"" >> $TFVARS_FILE
           done
         shell: bash
 
