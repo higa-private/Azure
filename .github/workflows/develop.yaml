@@ -9,7 +9,6 @@ env:
   node_version: "20.x"
   key_vault: "terraform20250909"
   provider_secrets: "subscription-id tenant-id sp-client-id sp-client-secret"
-  nsg_secrets: "nsg-inbound-ip nsg-outbound-ip"
 
 jobs:
   Terraform_Exec:
@@ -81,6 +80,7 @@ jobs:
             
             echo "${provider_varname} = \"${provider_value}\"" >> $TFVARS_FILE
           done
+          echo "}" >> $TFVARS_FILE
 
       - name: Terraform Plan
         shell: bash
