@@ -59,14 +59,22 @@ jobs:
 
       - name: Azure Login
         run: |
-          az login --identity
+          az login --identity 1> /dev/null
+
       - name: Get Key Vault Secret
         id: kv
         run: |
-          echo "SUBSCRIPTION_ID=$(az keyvault secret show \
-          --vault-name terraform20250909 \
-          --name test \
-          --query value -o tsv)" >> $GITHUB_ENV
+          SECRETS=("subscription-id" "tenant-id" "sp-client-id" "sp-client-secret" "nsg-inbound-ip" "nsg-outbound-ip")
+          for secret in "${SECRETS[@]}"; do
+            value=$(az keyvault secret show \
+              --vault-name terraform20250909 \
+              --name "$secret" \
+              --query value -o tsv)
+            # ハイフンをアンダースコアに置換して大文字化
+            varname=$(echo "$secret" | tr '[:lower:]-' '[:upper:]_')
+            
+            echo "${varname}=$value" >> $GITHUB_ENV
+          done
 
       - name: Check Key Vault Secret
         run: echo "SUBSCRIPTION_ID=${SUBSCRIPTION_ID}"
