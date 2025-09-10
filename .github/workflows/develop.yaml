@@ -67,8 +67,8 @@ jobs:
           --name test \
           --query value -o tsv)" >> $GITHUB_ENV
 
-       - name: Check Key Vault Secret
-         run: echo "SUBSCRIPTION_ID=${SUBSCRIPTION_ID}"
+      - name: Check Key Vault Secret
+        run: echo "SUBSCRIPTION_ID=${SUBSCRIPTION_ID}"
 
       - name: Terraform Plan
         run: |
