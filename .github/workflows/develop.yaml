@@ -56,6 +56,21 @@ jobs:
           cd ${{ matrix.tf_working_dir }}/
           terraform init -upgrade
 
+      - name: Azure Login
+        run: |
+          az login --identity
+
+- name: Get Key Vault Secret
+  id: kv
+  run: |
+    echo "SUBSCRIPTION_ID=$(az keyvault secret show \
+      --vault-name terraform20250909 \
+      --name test \
+      --query value -o tsv)" >> $GITHUB_ENV
+
+- name: Check Key Vault Secret
+  run: echo "SUBSCRIPTION_ID=${SUBSCRIPTION_ID}"
+
       - name: Terraform Plan
         run: |
           cd ${{ matrix.tf_working_dir }}/

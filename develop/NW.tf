@@ -25,4 +25,5 @@ resource "azurerm_subnet" "develop_subnet" {
   resource_group_name  = azurerm_resource_group.develop.name
   virtual_network_name = azurerm_virtual_network.develop_vnet.name
   address_prefixes     = [var.develop_subnet_address_prefixes[count.index]]
+  service_endpoints    = var.develop_subnet_name[count.index] == "vm-subnet" ? var.develop_service_endpoints : []
 }

@@ -10,6 +10,7 @@ vnet_address_space  = ["10.0.0.0/23"]
 
 develop_subnet_name             = ["vm-subnet", "bastion-work", "endpoint-subnet", "firewall-subnet"]
 develop_subnet_address_prefixes = ["10.0.0.0/28", "10.0.1.0/28", "10.0.1.16/28", "10.0.0.16/28"]
+develop_service_endpoints       = ["Microsoft.KeyVault"]
 
 # vm.tf
 public_ip_name = "runner-pub-ip"
@@ -59,3 +60,10 @@ admin_username    = "higa"
 vm_size           = "Standard_B1s"
 os_disk_size_gb   = 30
 data_disk_size_gb = 10
+
+# key_vault
+key_vault_name    = "terraform20250909"
+key_permissions   = ["get", "list", "create", "delete", "recover", "backup", "restore", "import", "update", "getrotationpolicy", "setrotationpolicy", "rotate"]
+secret_permissions = ["get", "list", "set", "delete", "recover", "backup", "restore"]
+# key_vault_key
+develop_secret_name = ["subscription-id", "tenant-id", "sp-client-id", "sp-client-secret", "nsg-inbound-ip", "nsg-outbound-ip","test"]  # 空文字列の場合、ランダムなキー名が生成される

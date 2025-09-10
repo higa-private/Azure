@@ -173,3 +173,31 @@ variable "vm_custom_data" {
   type    = string
   default = ""
 }
+
+variable "data_disk_size_gb" {
+  type    = number
+  default = 10
+}
+
+# サービスエンドポイント
+variable "develop_service_endpoints" {
+  type    = list(string)
+  default = []
+}
+# Key Vault
+variable "key_vault_name" {
+  type    = string
+  default = ""
+} 
+variable "key_permissions" {
+  type    = list(string)
+  default = ["Get", "List", "Create", "Update", "Delete", "Recover", "Backup", "Restore", "Import", "GetRotationPolicy", "SetRotationPolicy", "Rotate"]
+}
+variable "secret_permissions" {
+  type    = list(string)
+  default = ["Get", "List", "Set", "Delete", "Recover", "Backup", "Restore"]
+} 
+variable "develop_secret_name" {
+  type    = list(string)
+  default = []
+} 

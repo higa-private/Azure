@@ -89,6 +89,10 @@ resource "azurerm_linux_virtual_machine" "vm" {
     sku       = "9-gen2"
     version   = "latest"
   }
+
+  identity {
+    type = "SystemAssigned"
+  }
 }
 
 
