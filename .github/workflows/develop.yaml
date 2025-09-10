@@ -66,7 +66,7 @@ jobs:
 
       - name: Create Terraform tfvars from Provider_Key Vault
         run: |
-          TFVARS_FILE=credentials.auto.tfvars
+          TFVARS_FILE=${{ matrix.tf_working_dir }}/credentials.auto.tfvars
           # provider_credentials ブロック開始
           echo "provider_credentials = {" >> $TFVARS_FILE
 
