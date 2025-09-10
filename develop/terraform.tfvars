@@ -12,6 +12,9 @@ develop_subnet_name             = ["vm-subnet", "bastion-work", "endpoint-subnet
 develop_subnet_address_prefixes = ["10.0.0.0/28", "10.0.1.0/28", "10.0.1.16/28", "10.0.0.16/28"]
 develop_service_endpoints       = ["Microsoft.KeyVault"]
 
+nsg_inbound_ip  = "133.32.130.212/32"
+nsg_outbound_ip = "*"
+
 # vm.tf
 public_ip_name = "runner-pub-ip"
 nsg_name       = "develop-nsg"
@@ -66,4 +69,4 @@ key_vault_name    = "terraform20250909"
 key_permissions   = ["get", "list", "create", "delete", "recover", "backup", "restore", "import", "update", "getrotationpolicy", "setrotationpolicy", "rotate"]
 secret_permissions = ["get", "list", "set", "delete", "recover", "backup", "restore"]
 # key_vault_key
-develop_secret_name = ["subscription-id", "tenant-id", "sp-client-id", "sp-client-secret", "nsg-inbound-ip", "nsg-outbound-ip","test"]  # 空文字列の場合、ランダムなキー名が生成される
+develop_secret_name = ["subscription-id", "tenant-id", "sp-client-id", "sp-client-secret"] 

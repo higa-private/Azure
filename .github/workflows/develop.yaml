@@ -81,17 +81,6 @@ jobs:
             
             echo "${provider_varname} = \"${provider_value}\"" >> $TFVARS_FILE
           done
-          echo "}" >> $TFVARS_FILE
-
-          # nsg_inbound_ip, nsg_outbound_ip 変数設定
-          for secret in ${{ env.nsg_secrets }}; do
-            nsg_value=$(az keyvault secret show \
-              --vault-name ${{ env.key_vault }} \
-              --name "$secret" \
-              --query value -o tsv)
-            nsg_varname=$(echo "$secret" | tr '[:lower:]-' '[:lower:]_')
-            echo "${nsg_varname} = \"${nsg_value}\"" >> $TFVARS_FILE
-          done
 
       - name: Terraform Plan
         shell: bash
