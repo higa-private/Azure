@@ -53,7 +53,7 @@ jobs:
         shell: bash
         run: |
           cd ${{ matrix.tf_working_dir }}
-          echo "::set-output name=tf_region_dir::$(pwd)"
+          echo "tf_region_dir=$(pwd)" >> $GITHUB_OUTPUT
 
       - name: Terraform Init
         run: |
