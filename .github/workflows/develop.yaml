@@ -16,8 +16,6 @@ jobs:
     runs-on: [self-hosted, Linux]
     container:
       image: docker.io/library/node:iron-trixie-slim
-    outputs:
-      output1: ${{ steps.get_dir.outputs.tf_region_dir }}
     strategy:
       fail-fast: true
       max-parallel: 1
@@ -26,6 +24,7 @@ jobs:
           - develop
     steps:
       - name: Setup OS
+        shell: bash
         run: |
           apt-get update && apt-get install -y ca-certificates   # イメージ初期構築時にインストールするので、実際に不要
 
@@ -56,15 +55,18 @@ jobs:
           echo "tf_region_dir=$(pwd)" >> $GITHUB_OUTPUT
 
       - name: Terraform Init
+        shell: bash
         run: |
           cd ${{ matrix.tf_working_dir }}/
           terraform init -upgrade
 
       - name: Azure Login
+        shell: bash
         run: |
           az login --identity 1> /dev/null
 
-      - name: Create Terraform tfvars from Provider_Key Vault
+      - name: Create Terraform tfvars from Key Vault
+        shell: bash
         run: |
           TFVARS_FILE=${{ matrix.tf_working_dir }}/credentials.auto.tfvars
           # provider_credentials ブロック開始
@@ -90,9 +92,9 @@ jobs:
             nsg_varname=$(echo "$secret" | tr '[:lower:]-' '[:lower:]_')
             echo "${nsg_varname} = \"${nsg_value}\"" >> $TFVARS_FILE
           done
-        shell: bash
 
       - name: Terraform Plan
+        shell: bash
         run: |
           cd ${{ matrix.tf_working_dir }}/
           terraform plan --parallelism=50 -no-color
