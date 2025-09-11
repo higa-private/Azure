@@ -53,16 +53,16 @@ jobs:
           cd ${{ matrix.tf_working_dir }}
           echo "tf_region_dir=$(pwd)" >> $GITHUB_OUTPUT
 
+      - name: Azure Login
+        shell: bash
+        run: |
+          az login --identity 1> /dev/null   # Terraform Initの前に実行すること
+
       - name: Terraform Init
         shell: bash
         run: |
           cd ${{ matrix.tf_working_dir }}/
           terraform init -upgrade
-
-      - name: Azure Login
-        shell: bash
-        run: |
-          az login --identity 1> /dev/null
 
       - name: Create Terraform tfvars from Key Vault
         shell: bash
