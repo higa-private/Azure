@@ -53,36 +53,45 @@ jobs:
           cd ${{ matrix.tf_working_dir }}
           echo "tf_region_dir=$(pwd)" >> $GITHUB_OUTPUT
 
-      - name: Azure Login
-        shell: bash
-        run: |
-          az login --identity 1> /dev/null   # Terraform Initの前に実行すること
+      - name: Azure Login using Service Principal
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
 
       - name: Create Terraform tfvars from Key Vault
         shell: bash
         run: |
           TFVARS_FILE=${{ matrix.tf_working_dir }}/credentials.auto.tfvars
-          # provider_credentials ブロック開始
-          echo "provider_credentials = {" >> $TFVARS_FILE
+          echo "provider_credentials = {" > $TFVARS_FILE
 
           for secret in ${{ env.provider_secrets }}; do
-            provider_value=$(az keyvault secret show \
-              --vault-name ${{ env.key_vault }} \
-              --name "$secret" \
-              --query value -o tsv)
-            provider_varname=$(echo "$secret" | tr '[:lower:]-' '[:lower:]_')
-            
-            echo "${provider_varname} = \"${provider_value}\"" >> $TFVARS_FILE
+            value=$(az keyvault secret show --vault-name ${{ env.key_vault }} --name "$secret" --query value -o tsv)
+            varname=$(echo "$secret" | tr '[:lower:]-' '[:lower:]_')
+            echo "${varname} = \"${value}\"" >> $TFVARS_FILE
           done
+
           echo "}" >> $TFVARS_FILE
 
       - name: Terraform Init
+        env: # Azure RM Provider 用
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         shell: bash
         run: |
           cd ${{ matrix.tf_working_dir }}/
           terraform init -upgrade
 
       - name: Terraform Plan
+        env:
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         shell: bash
         run: |
           cd ${{ matrix.tf_working_dir }}/
