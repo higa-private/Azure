@@ -58,12 +58,6 @@ jobs:
         run: |
           az login --identity 1> /dev/null   # Terraform Initの前に実行すること
 
-      - name: Terraform Init
-        shell: bash
-        run: |
-          cd ${{ matrix.tf_working_dir }}/
-          terraform init -upgrade
-
       - name: Create Terraform tfvars from Key Vault
         shell: bash
         run: |
@@ -81,6 +75,12 @@ jobs:
             echo "${provider_varname} = \"${provider_value}\"" >> $TFVARS_FILE
           done
           echo "}" >> $TFVARS_FILE
+
+      - name: Terraform Init
+        shell: bash
+        run: |
+          cd ${{ matrix.tf_working_dir }}/
+          terraform init -upgrade
 
       - name: Terraform Plan
         shell: bash
