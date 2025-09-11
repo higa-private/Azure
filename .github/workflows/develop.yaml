@@ -9,6 +9,9 @@ env:
   node_version: "20.x"
   key_vault: "terraform20250909"
   provider_secrets: "subscription-id tenant-id sp-client-id sp-client-secret"
+  backend_storage_account: "develop01"
+  backend_container_name: "tfstate20250911"
+  backend_key: "terraform.tfstate"
 
 jobs:
   Terraform_Exec:
@@ -22,6 +25,8 @@ jobs:
         tf_working_dir:
           - develop
     steps:
+      - uses: actions/checkout@v2
+
       - name: Setup OS
         shell: bash
         run: |
@@ -30,8 +35,6 @@ jobs:
           sed -i -e 's/http/https/' /etc/apt/sources.list.d/debian.sources
           apt-get update && apt-get install -y less vim curl unzip sudo jq git
           curl -sL https://aka.ms/InstallAzureCLIDeb | bash
-
-      - uses: actions/checkout@v2
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -53,44 +56,45 @@ jobs:
           cd ${{ matrix.tf_working_dir }}
           echo "tf_region_dir=$(pwd)" >> $GITHUB_OUTPUT
 
-      - name: Azure Login using Service Principal
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-          auth-type: service_principal
-
-      - name: Create Terraform tfvars from Key Vault
+      - name: Azure Login
+        id: sp_secrets
         shell: bash
         run: |
-          TFVARS_FILE=${{ matrix.tf_working_dir }}/credentials.auto.tfvars
-          echo "provider_credentials = {" > $TFVARS_FILE
-
-          for secret in ${{ env.provider_secrets }}; do
+          for secret in subscription-id tenant-id sp-client-id sp-client-secret; do
             value=$(az keyvault secret show --vault-name ${{ env.key_vault }} --name "$secret" --query value -o tsv)
-            varname=$(echo "$secret" | tr '[:lower:]-' '[:lower:]_')
-            echo "${varname} = \"${value}\"" >> $TFVARS_FILE
+            name=$(echo "$secret" | tr '[:lower:]-' '[:lower:]_')
+            echo "$name=$value" >> $GITHUB_ENV
           done
 
-          echo "}" >> $TFVARS_FILE
+      - name: Azure Login using SP
+        shell: bash
+        run: |
+          az login --service-principal \
+            --username $sp_client_id \
+            --password $sp_client_secret \
+            --tenant $tenant_id
 
       - name: Terraform Init
-        env: # Azure RM Provider 用
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         shell: bash
+        env:
+          ARM_CLIENT_ID: $sp_client_id
+          ARM_CLIENT_SECRET: $sp_client_secret
+          ARM_TENANT_ID: $tenant_id
+          ARM_SUBSCRIPTION_ID: $subscription_id
         run: |
-          cd ${{ matrix.tf_working_dir }}/
-          terraform init -upgrade
+          cd ${{ matrix.tf_working_dir }}
+          terraform init -backend-config="storage_account_name=${{ env.backend_storage_account }}" \
+                         -backend-config="container_name=${{ env.backend_container_name }}" \
+                         -backend-config="key=${{ env.backend_key }}" \
+                         -upgrade
 
       - name: Terraform Plan
-        env:
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         shell: bash
+        env:
+          ARM_CLIENT_ID: $sp_client_id
+          ARM_CLIENT_SECRET: $sp_client_secret
+          ARM_TENANT_ID: $tenant_id
+          ARM_SUBSCRIPTION_ID: $subscription_id
         run: |
-          cd ${{ matrix.tf_working_dir }}/
+          cd ${{ matrix.tf_working_dir }}
           terraform plan --parallelism=50 -no-color
