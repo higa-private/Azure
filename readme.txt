@@ -1,6 +1,6 @@
 AlmaLinux9.x(OS)
-・dockerコマンド(sudo dnf install -y podman-docker)が必要
-・dockerはpodmanではなく、docker-ceをする（推奨らしい）
+・dockerはpodmanではなく、docker-ceにする（推奨らしい）
+・SELinux無効にしないとRunnerサービスが起動しない
 
   sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
   sudo dnf install -y docker-ce docker-ce-cli containerd.io

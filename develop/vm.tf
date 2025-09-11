@@ -50,15 +50,6 @@ resource "azurerm_network_interface_security_group_association" "develop_nic_nsg
   network_security_group_id = azurerm_network_security_group.develop_nsg.id
 }
 
-# Create storage account for boot diagnostics
-resource "azurerm_storage_account" "storage_account" {
-  name                     = var.storage_account_name
-  location                 = azurerm_resource_group.develop.location
-  resource_group_name      = azurerm_resource_group.develop.name
-  account_tier             = "Standard"
-  account_replication_type = "LRS"
-}
-
 # Create virtual machine
 resource "azurerm_linux_virtual_machine" "vm" {
   name                            = var.vm_name
@@ -92,5 +83,10 @@ resource "azurerm_linux_virtual_machine" "vm" {
 
   identity {
     type = "SystemAssigned"
+  }
+  lifecycle {
+    ignore_changes = [
+      admin_ssh_key,
+    ]
   }
 }

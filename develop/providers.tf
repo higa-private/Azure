@@ -17,3 +17,12 @@ provider "azurerm" {
   client_secret   = var.provider_credentials.sp_client_secret
   features {}
 }
+
+terraform {
+  backend "azurerm" {
+    resource_group_name  = "rg-develop"        # ストレージアカウントが所属するリソースグループ
+    storage_account_name = "develop01"         # ストレージアカウント名
+    container_name       = "tfstate20250911"  # コンテナ名
+    key                  = "terraform.tfstate" # ファイル名
+  }
+}
