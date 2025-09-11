@@ -8,7 +8,6 @@ env:
   tf_version: "1.5.4"
   node_version: "20.x"
   key_vault: "terraform20250909"
-  provider_secrets: "subscription-id tenant-id sp-client-id sp-client-secret"
   resource_group_name: "rg-develop"
   backend_storage_account: "develop01"
   backend_container_name: "tfstate20250911"
@@ -26,13 +25,12 @@ jobs:
         tf_working_dir:
           - develop
     steps:
-      - uses: actions/checkout@v2 #リポジトリのコードをチェックアウト（取得）
+      - uses: actions/checkout@v2
 
       - name: Setup OS
         shell: bash
         run: |
-          apt-get update && apt-get install -y ca-certificates  #イメージ初期構築時にインストールするので、実際に不要
-
+          apt-get update && apt-get install -y ca-certificates
           sed -i -e 's/http/https/' /etc/apt/sources.list.d/debian.sources
           apt-get update && apt-get install -y less vim curl unzip sudo jq git
           curl -sL https://aka.ms/InstallAzureCLIDeb | bash
@@ -57,31 +55,10 @@ jobs:
       - name: Terraform fmt
         run: terraform fmt -recursive
 
-      #      - name: Azure Login
-      #        shell: bash
-      #        run: |
-      #          az login --identity
-
-      - name: Export Key Vault secrets as environment variables
-        shell: bash
-        run: |
-          for secret in ${{ env.provider_secrets }}; do
-            value=$(az keyvault secret show --vault-name ${{ env.key_vault }} --name "$secret" --query value -o tsv)
-            name=$(echo "$secret" | tr '[:lower:]-' '[:lower:]_')
-            echo "$name=$value" >> $GITHUB_ENV
-          done
-
-      - name: Generate Terraform tfvars
-        shell: bash
-        run: |
-          TFVARS_FILE=${{ matrix.tf_working_dir }}/credentials.auto.tfvars
-          echo "provider_credentials = {" > $TFVARS_FILE
-          for secret in ${{ env.provider_secrets }}; do
-            varname=$(echo "$secret" | tr '[:lower:]-' '[:lower:]_')
-            value="${!varname}"
-            echo "${varname} = \"${value}\"" >> $TFVARS_FILE
-          done
-          echo "}" >> $TFVARS_FILE
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Terraform Init
         shell: bash
@@ -92,12 +69,6 @@ jobs:
             -backend-config="storage_account_name=${{ env.backend_storage_account }}" \
             -backend-config="container_name=${{ env.backend_container_name }}" \
             -backend-config="key=${{ env.backend_key }}"
-        # Terraformが環境変数から認証情報を取得できるように、環境変数を設定
-        env:
-          ARM_CLIENT_ID: ${{ env.sp_client_id }}
-          ARM_CLIENT_SECRET: ${{ env.sp_client_secret }}
-          ARM_TENANT_ID: ${{ env.tenant_id }}
-          ARM_SUBSCRIPTION_ID: ${{ env.subscription_id }}
 
       - name: Terraform Plan
         shell: bash
