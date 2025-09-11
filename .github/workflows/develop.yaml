@@ -56,10 +56,10 @@ jobs:
       - name: Terraform fmt
         run: terraform fmt -recursive
 
-      - name: Azure Login
-        shell: bash
-        run: |
-          az login --identity
+      #      - name: Azure Login
+      #        shell: bash
+      #        run: |
+      #          az login --identity
 
       - name: Export Key Vault secrets as environment variables
         shell: bash
@@ -91,6 +91,12 @@ jobs:
             -backend-config="storage_account_name=${{ env.backend_storage_account }}" \
             -backend-config="container_name=${{ env.backend_container_name }}" \
             -backend-config="key=${{ env.backend_key }}"
+        # Terraformが環境変数から認証情報を取得できるように、環境変数を設定
+        env:
+          ARM_CLIENT_ID: ${{ env.sp_client_id }}
+          ARM_CLIENT_SECRET: ${{ env.sp_client_secret }}
+          ARM_TENANT_ID: ${{ env.tenant_id }}
+          ARM_SUBSCRIPTION_ID: ${{ env.subscription_id }}
 
       - name: Terraform Plan
         shell: bash
