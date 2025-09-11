@@ -25,12 +25,12 @@ jobs:
         tf_working_dir:
           - develop
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2 #リポジトリのコードをチェックアウト（取得）
 
       - name: Setup OS
         shell: bash
         run: |
-          apt-get update && apt-get install -y ca-certificates   # イメージ初期構築時にインストールするので、実際に不要
+          apt-get update && apt-get install -y ca-certificates  #イメージ初期構築時にインストールするので、実際に不要
 
           sed -i -e 's/http/https/' /etc/apt/sources.list.d/debian.sources
           apt-get update && apt-get install -y less vim curl unzip sudo jq git
@@ -46,9 +46,6 @@ jobs:
         with:
           terraform_version: ${{ env.tf_version }}
 
-      - name: Terraform fmt
-        run: terraform fmt -recursive
-
       - name: Get Terraform Directory
         id: get_dir
         shell: bash
@@ -56,45 +53,47 @@ jobs:
           cd ${{ matrix.tf_working_dir }}
           echo "tf_region_dir=$(pwd)" >> $GITHUB_OUTPUT
 
+      - name: Terraform fmt
+        run: terraform fmt -recursive
+
       - name: Azure Login
-        id: sp_secrets
         shell: bash
         run: |
-          for secret in subscription-id tenant-id sp-client-id sp-client-secret; do
+          az login --identity
+
+      - name: Export Key Vault secrets as environment variables
+        shell: bash
+        run: |
+          for secret in ${{ env.provider_secrets }}; do
             value=$(az keyvault secret show --vault-name ${{ env.key_vault }} --name "$secret" --query value -o tsv)
             name=$(echo "$secret" | tr '[:lower:]-' '[:lower:]_')
             echo "$name=$value" >> $GITHUB_ENV
           done
 
-      - name: Azure Login using SP
+      - name: Generate Terraform tfvars
         shell: bash
         run: |
-          az login --service-principal \
-            --username $sp_client_id \
-            --password $sp_client_secret \
-            --tenant $tenant_id
+          TFVARS_FILE=${{ matrix.tf_working_dir }}/credentials.auto.tfvars
+          echo "provider_credentials = {" > $TFVARS_FILE
+          for secret in ${{ env.provider_secrets }}; do
+            varname=$(echo "$secret" | tr '[:lower:]-' '[:lower:]_')
+            value="${!varname}"
+            echo "${varname} = \"${value}\"" >> $TFVARS_FILE
+          done
+          echo "}" >> $TFVARS_FILE
 
       - name: Terraform Init
         shell: bash
-        env:
-          ARM_CLIENT_ID: $sp_client_id
-          ARM_CLIENT_SECRET: $sp_client_secret
-          ARM_TENANT_ID: $tenant_id
-          ARM_SUBSCRIPTION_ID: $subscription_id
         run: |
           cd ${{ matrix.tf_working_dir }}
-          terraform init -backend-config="storage_account_name=${{ env.backend_storage_account }}" \
-                         -backend-config="container_name=${{ env.backend_container_name }}" \
-                         -backend-config="key=${{ env.backend_key }}" \
-                         -upgrade
+          terraform init -upgrade \
+            -backend-config="resource_group_name=rg-tfstate" \
+            -backend-config="storage_account_name=${{ env.backend_storage_account }}" \
+            -backend-config="container_name=${{ env.backend_container_name }}" \
+            -backend-config="key=${{ env.backend_key }}"
 
       - name: Terraform Plan
         shell: bash
-        env:
-          ARM_CLIENT_ID: $sp_client_id
-          ARM_CLIENT_SECRET: $sp_client_secret
-          ARM_TENANT_ID: $tenant_id
-          ARM_SUBSCRIPTION_ID: $subscription_id
         run: |
           cd ${{ matrix.tf_working_dir }}
           terraform plan --parallelism=50 -no-color
