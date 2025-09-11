@@ -61,6 +61,24 @@ jobs:
         run: |
           az login --identity
 
+      - name: Create Terraform tfvars from Key Vault
+        shell: bash
+        run: |
+          TFVARS_FILE=${{ matrix.tf_working_dir }}/credentials.auto.tfvars
+          # provider_credentials ブロック開始
+          echo "provider_credentials = {" >> $TFVARS_FILE
+
+          for secret in ${{ env.provider_secrets }}; do
+            provider_value=$(az keyvault secret show \
+              --vault-name ${{ env.key_vault }} \
+              --name "$secret" \
+              --query value -o tsv)
+            provider_varname=$(echo "$secret" | tr '[:lower:]-' '[:lower:]_')
+            
+            echo "${provider_varname} = \"${provider_value}\"" >> $TFVARS_FILE
+          done
+          echo "}" >> $TFVARS_FILE
+
       - name: Export Key Vault secrets as environment variables
         shell: bash
         run: |
