@@ -9,6 +9,7 @@ env:
   node_version: "20.x"
   key_vault: "terraform20250909"
   provider_secrets: "subscription-id tenant-id sp-client-id sp-client-secret"
+  resource_group_name: "rg-develop"
   backend_storage_account: "develop01"
   backend_container_name: "tfstate20250911"
   backend_key: "terraform.tfstate"
@@ -87,7 +88,7 @@ jobs:
         run: |
           cd ${{ matrix.tf_working_dir }}
           terraform init -upgrade \
-            -backend-config="resource_group_name=rg-tfstate" \
+            -backend-config="resource_group_name=${{ env.resource_group_name }}" \
             -backend-config="storage_account_name=${{ env.backend_storage_account }}" \
             -backend-config="container_name=${{ env.backend_container_name }}" \
             -backend-config="key=${{ env.backend_key }}"

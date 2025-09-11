@@ -26,3 +26,4 @@ Terrafrom実行用サービス プリンシパルにはIAMロール権限追加�
 秘密情報するコマンド
 az keyvault secret show --vault-name terraform20250909 --name subscription-id --query "value" -o tsv
 
+GitHub Runner から Azure Blob に tfstate を保存したい場合は SP 認証必須。
