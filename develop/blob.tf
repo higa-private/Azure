@@ -10,6 +10,6 @@ resource "azurerm_storage_account" "storage_account" {
 # Blob コンテナ
 resource "azurerm_storage_container" "tfstate_container" {
   name                  = "tfstate20250911"
-  storage_account_id    = azurerm_storage_account.storage_account.name
+  storage_account_id    = azurerm_storage_account.storage_account.id
   container_access_type = "private"
 }
