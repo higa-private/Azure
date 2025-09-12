@@ -40,9 +40,9 @@ jobs:
       - name: Setup OS # コンテナに必要なパッケージをインストール
         shell: bash
         run: |
-          apt-get update && apt-get install -y ca-certificates                     # https通信で必要なので最初にインストール
-          sed -i -e 's/http/https/' /etc/apt/sources.list.d/ubuntu.sources      # Ubuntuのパッケージリポジトリをhttpsに変更
-          apt-get update && apt-get install -y vim curl unzip sudo jq git       # 必要なパッケージをインストール
+          apt-get update && apt-get install -y ca-certificates                    # https通信で必要なので最初にインストール
+          sed -i -e 's/http/https/' /etc/apt/sources.list.d/ubuntu.sources        # Ubuntuのパッケージリポジトリをhttpsに変更
+          apt-get update && apt-get install -y curl unzip                         # 必要なパッケージをインストール
           curl -sL https://aka.ms/InstallAzureCLIDeb | bash                       # 後続のWF処理でAzure CLIが必要なのでインストール
 
       - name: Setup Node.js
@@ -54,6 +54,9 @@ jobs:
         uses: hashicorp/setup-terraform@v1 # Terraformのインストール
         with:
           terraform_version: ${{ env.tf_version }} # Terraformのバージョン指定
+
+      - name: Setup tfcmt
+        uses: shmokmt/actions-setup-tfcmt@v4
 
       - name: Get Terraform Directory
         id: get_dir
@@ -68,7 +71,7 @@ jobs:
       - name: Azure Login # VMがあるAzureのKey Vaultから秘密情報を取得するためにAzureにログイン
         shell: bash
         run: |
-          az login --identity
+          az login --identity 1> /dev/null
 
       - name: Create Terraform tfvars from Key Vault # Key Vaultから秘密情報を取得し、Terraformのprovider用変数ファイルを作成
         shell: bash
@@ -109,7 +112,7 @@ jobs:
         shell: bash
         run: |
           cd ${{ matrix.tf_working_dir }}
-          terraform plan --parallelism=50 -no-color
+          tfcmt plan -- terraform plan --parallelism=50 -no-color
         env:
           ARM_CLIENT_ID: ${{ env.ARM_CLIENT_ID }}
           ARM_CLIENT_SECRET: ${{ env.ARM_CLIENT_SECRET }}
