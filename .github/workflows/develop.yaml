@@ -14,7 +14,6 @@ on:
 env:
   ## 個別設定
   customer_name: "" # 顧名名、PJ名などKeyVault名に付与する
-  working_dir: develop
 
   ## 基盤要件
   resource_group_name: "rg-develop"
@@ -41,7 +40,7 @@ jobs:
       max-parallel: 5
       matrix:
         tf_working_dir: # WFを実行するTerraformディレクトリを指定
-          - ${{ env.working_dir }}
+          - develop
     steps:
       - uses: actions/checkout@v2 # リポジトリのコードをコンテナ上にチェックアウト（ダウンロード）
 
