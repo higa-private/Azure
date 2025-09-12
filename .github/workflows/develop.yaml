@@ -58,7 +58,7 @@ jobs:
       - name: Setup tfcmt
         uses: shmokmt/actions-setup-tfcmt@v2
         with:
-          version: 4.14.11
+          version: v4.14.11
 
       - name: Get Terraform Directory
         id: get_dir
