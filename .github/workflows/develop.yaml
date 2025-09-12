@@ -1,10 +1,3 @@
-# WFの流れ
-# １．terraform fmtでコードのフォーマットチェックをする
-# ２．後続の処理を実行するためコンテナ上のOSセットアップを実施
-# ３．Azureにログイン（VMのマネージドIDを使用）し、Key Vaultから秘密情報を取得ししredentials.auto.tfvarsファイルに格納
-# 　　※KeyVaultはTerrafrom実行で必要なProvider情報の変数が事前に格納されている
-# ４．credentials.auto.tfvarsの認証情報を使用しTerrafromを実行
-
 name: develop workflow test
 
 on:
@@ -44,6 +37,14 @@ jobs:
     steps:
       - uses: actions/checkout@v2 # リポジトリのコードをコンテナ上にチェックアウト（ダウンロード）
 
+      - name: Setup OS # コンテナに必要なパッケージをインストール
+        shell: bash
+        run: |
+          apt-get update && apt-get install -y ca-certificates                     # https通信で必要なので最初にインストール
+          sed -i -e 's/http/https/' /etc/apt/sources.list.d/ubuntu.sources      # Ubuntuのパッケージリポジトリをhttpsに変更
+          apt-get update && apt-get install -y vim curl unzip sudo jq git       # 必要なパッケージをインストール
+          curl -sL https://aka.ms/InstallAzureCLIDeb | bash                       # 後続のWF処理でAzure CLIが必要なのでインストール
+
       - name: Setup Node.js
         uses: actions/setup-node@v3 # Node.jsのインストール
         with:
@@ -63,14 +64,6 @@ jobs:
 
       - name: Terraform fmt # Terraformコードのフォーマットチェック
         run: terraform fmt -recursive
-
-      - name: Setup OS # コンテナに必要なパッケージをインストール
-        shell: bash
-        run: |
-          apt-get update && apt-get install -y ca-certificates                     # https通信で必要なので最初にインストール
-          sed -i -e 's/http/https/' /etc/apt/sources.list.d/ubuntu.sources      # Ubuntuのパッケージリポジトリをhttpsに変更
-          apt-get update && apt-get install -y vim curl unzip sudo jq git       # 必要なパッケージをインストール
-          curl -sL https://aka.ms/InstallAzureCLIDeb | bash                       # 後続のWF処理でAzure CLIが必要なのでインストール
 
       - name: Azure Login # VMがあるAzureのKey Vaultから秘密情報を取得するためにAzureにログイン
         shell: bash
