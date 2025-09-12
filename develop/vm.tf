@@ -59,7 +59,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
   location                        = azurerm_resource_group.develop.location
   resource_group_name             = azurerm_resource_group.develop.name
   network_interface_ids           = [azurerm_network_interface.develop_nic.id]
-  size                            = "Standard_B1s"
+  size                            = "Standard_B2s"
   #custom_data                     = filebase64("userdata/cloud-init.txt")
 
   admin_ssh_key {
