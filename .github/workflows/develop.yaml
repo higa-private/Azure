@@ -1,3 +1,10 @@
+# WFの流れ
+# １．terraform fmtでコードのフォーマットチェックをする
+# ２．後続の処理を実行するためコンテナ上のOSセットアップを実施
+# ３．Azureにログイン（VMのマネージドIDを使用）し、Key Vaultから秘密情報を取得ししredentials.auto.tfvarsファイルに格納
+# 　　※KeyVaultはTerrafrom実行で必要なProvider情報の変数が事前に格納されている
+# ４．credentials.auto.tfvarsの認証情報を使用しTerrafromを実行
+
 name: develop workflow test
 
 on:
@@ -5,88 +12,91 @@ on:
     branches: ["develop"]
 
 env:
-  tf_version: "1.5.4"
-  node_version: "20.x"
-  key_vault: "terraform20250909"
-  provider_secrets: "subscription-id tenant-id sp-client-id sp-client-secret"
+  ## 個別設定
+  customer_name: "" # 顧名名、PJ名などKeyVault名に付与する
+  working_dir: develop
+
+  ## 基盤要件
   resource_group_name: "rg-develop"
   backend_storage_account: "develop01"
   backend_container_name: "tfstate20250911"
   backend_key: "terraform.tfstate"
+  key_vault: "terraform20250909"
+  # AzureのKeyVaultから取得する秘密情報の名前リスト（customer_name + "_" + 以下の名前でKeyVaultに登録されている想定）
+  key_vault_subscription: "subscription-id"
+  key_vault_tenant: "tenant-id"
+  key_vault_sp_id: "sp-client-id"
+  key_vault_sp_secret: "sp-client-secret"
+  # ツールバージョン
+  tf_version: "1.5.4"
+  node_version: "20.x"
 
 jobs:
   Terraform_Exec:
     runs-on: [self-hosted, Linux]
     container:
-      image: docker.io/library/ubuntu:noble-20250805
+      image: docker.io/library/ubuntu:noble-20250805 #24.04.3 LTS
     strategy:
       fail-fast: true
-      max-parallel: 1
+      max-parallel: 5
       matrix:
-        tf_working_dir:
-          - develop
+        tf_working_dir: # WFを実行するTerraformディレクトリを指定
+          - ${{ env.working_dir }}
     steps:
-      - uses: actions/checkout@v2
-
-      - name: Setup OS
-        shell: bash
-        run: |
-          apt-get update && apt-get install -y ca-certificates
-          sed -i -e 's/http/https/' /etc/apt/sources.list.d/ubuntu.sources
-          apt-get update && apt-get install -y less vim curl unzip sudo jq git
-          curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+      - uses: actions/checkout@v2 # リポジトリのコードをコンテナ上にチェックアウト（ダウンロード）
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v3 # Node.jsのインストール
         with:
-          node-version: ${{ env.node_version }}
+          node-version: ${{ env.node_version }} # Node.jsのバージョン指定
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v1
+        uses: hashicorp/setup-terraform@v1 # Terraformのインストール
         with:
-          terraform_version: ${{ env.tf_version }}
+          terraform_version: ${{ env.tf_version }} # Terraformのバージョン指定
 
       - name: Get Terraform Directory
         id: get_dir
-        shell: bash
+        shell: bash # Shellをbashに指定しないと{}での境変数展開ができない （後続も同じ理由なので説明は割愛）
         run: |
-          cd ${{ matrix.tf_working_dir }}
+          cd ${{ matrix.tf_working_dir }} 
           echo "tf_region_dir=$(pwd)" >> $GITHUB_OUTPUT
 
-      - name: Terraform fmt
+      - name: Terraform fmt # Terraformコードのフォーマットチェック
         run: terraform fmt -recursive
 
-      - name: Azure Login
+      - name: Setup OS # コンテナに必要なパッケージをインストール
+        shell: bash
+        run: |
+          apt-get update && apt-get install -y ca-certificates                     # https通信で必要なので最初にインストール
+          sed -i -e 's/http/https/' /etc/apt/sources.list.d/ubuntu.sources      # Ubuntuのパッケージリポジトリをhttpsに変更
+          apt-get update && apt-get install -y vim curl unzip sudo jq git       # 必要なパッケージをインストール
+          curl -sL https://aka.ms/InstallAzureCLIDeb | bash                       # 後続のWF処理でAzure CLIが必要なのでインストール
+
+      - name: Azure Login # VMがあるAzureのKey Vaultから秘密情報を取得するためにAzureにログイン
         shell: bash
         run: |
           az login --identity
 
-      - name: Create Terraform tfvars from Key Vault
+      - name: Create Terraform tfvars from Key Vault # Key Vaultから秘密情報を取得し、Terraformのprovider用変数ファイルを作成
         shell: bash
         run: |
           TFVARS_FILE=${{ matrix.tf_working_dir }}/credentials.auto.tfvars
-          # provider_credentials ブロック開始
-          echo "provider_credentials = {" >> $TFVARS_FILE
 
-          for secret in ${{ env.provider_secrets }}; do
-            provider_value=$(az keyvault secret show \
-              --vault-name ${{ env.key_vault }} \
-              --name "$secret" \
-              --query value -o tsv)
-            provider_varname=$(echo "$secret" | tr '[:lower:]-' '[:lower:]_')
-            
-            echo "${provider_varname} = \"${provider_value}\"" >> $TFVARS_FILE
-          done
+          echo "provider_credentials = {" >> $TFVARS_FILE
+          echo "subscription_id = \"$(az keyvault secret show --vault-name ${{ env.key_vault }} --name ${{ env.customer_name }}${{ env.key_vault_subscription }} --query value -o tsv)\"" >> $TFVARS_FILE
+          echo "tenant_id = \"$(az keyvault secret show --vault-name ${{ env.key_vault }} --name ${{ env.customer_name }}${{ env.key_vault_tenant }} --query value -o tsv)\"" >> $TFVARS_FILE
+          echo "sp_client_id = \"$(az keyvault secret show --vault-name ${{ env.key_vault }} --name ${{ env.customer_name }}${{ env.key_vault_sp_id }} --query value -o tsv)\"" >> $TFVARS_FILE
+          echo "sp_client_secret = \"$(az keyvault secret show --vault-name ${{ env.key_vault }} --name ${{ env.customer_name }}{{ env.key_vault_sp_secret }} --query value -o tsv)\"" >> $TFVARS_FILE
           echo "}" >> $TFVARS_FILE
 
       - name: Export Key Vault secrets as environment variables
         shell: bash
         run: |
-          for secret in ${{ env.provider_secrets }}; do
-            value=$(az keyvault secret show --vault-name ${{ env.key_vault }} --name "$secret" --query value -o tsv)
-            name=$(echo "$secret" | tr '[:lower:]-' '[:lower:]_')
-            echo "$name=$value" >> $GITHUB_ENV
-          done
+          echo "ARM_SUBSCRIPTION_ID=$(az keyvault secret show --vault-name ${{ env.key_vault }} --name ${{ env.customer_name }}${{ env.key_vault_subscription }} --query value -o tsv)" >> $GITHUB_ENV
+          echo "ARM_TENANT_ID=$(az keyvault secret show --vault-name ${{ env.key_vault }} --name ${{ env.customer_name }}${{ env.key_vault_tenant }} --query value -o tsv)" >> $GITHUB_ENV
+          echo "ARM_CLIENT_ID=$(az keyvault secret show --vault-name ${{ env.key_vault }} --name ${{ env.customer_name }}${{ env.key_vault_sp_id }} --query value -o tsv)" >> $GITHUB_ENV
+          echo "ARM_CLIENT_SECRET=$(az keyvault secret show --vault-name ${{ env.key_vault }} --name ${{ env.customer_name }}${{ env.key_vault_sp_secret }} --query value -o tsv)" >> $GITHUB_ENV
 
       - name: Terraform Init
         shell: bash
@@ -98,10 +108,10 @@ jobs:
             -backend-config="container_name=${{ env.backend_container_name }}" \
             -backend-config="key=${{ env.backend_key }}"
         env:
-          ARM_CLIENT_ID: ${{ env.sp_client_id }}
-          ARM_CLIENT_SECRET: ${{ env.sp_client_secret }}
-          ARM_TENANT_ID: ${{ env.tenant_id }}
-          ARM_SUBSCRIPTION_ID: ${{ env.subscription_id }}
+          ARM_CLIENT_ID: ${{ env.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ env.ARM_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ env.ARM_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ env.ARM_SUBSCRIPTION_ID }}
 
       - name: Terraform Plan
         shell: bash
@@ -109,7 +119,7 @@ jobs:
           cd ${{ matrix.tf_working_dir }}
           terraform plan --parallelism=50 -no-color
         env:
-          ARM_CLIENT_ID: ${{ env.sp_client_id }}
-          ARM_CLIENT_SECRET: ${{ env.sp_client_secret }}
-          ARM_TENANT_ID: ${{ env.tenant_id }}
-          ARM_SUBSCRIPTION_ID: ${{ env.subscription_id }}
+          ARM_CLIENT_ID: ${{ env.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ env.ARM_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ env.ARM_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ env.ARM_SUBSCRIPTION_ID }}
