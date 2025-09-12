@@ -1,0 +1,36 @@
+package_update: true
+package_upgrade: all
+
+groups:
+  - develop
+
+users:
+  - name: runner
+    gecos: Developer User
+    groups: develop
+    shell: /bin/bash
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    ssh_authorized_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCrLZp9A8vYyFQGabPFELzUQbqhya02TS3AAL9tftasR4Zvd54DpFiYTzShFixz5aPkXGhn/hSJk4b9R/txQUB0JgG7LBa8ocXuELIYUBk7eXDJPuzoL0AK4o1oo3GmuXhr1iNtHGRdqtVDCeGEWExTQz3hyy2vMPTBdT3yZD7q3HexRnzVl+fnVc7yvAiY7T6O34NPUbRRjTWy4rRSrYo0VOKjam2H21oRuoYqdzUPk0B2tcaGMhHDFyxctct+lfmzC7mZHHVw980vRJPRm6FVP3w3eBN5i8Ty8ZnNrR7VPp7/fkS+spCQSLPOZHgt23x1+JojHVC/nXFvLaJzfVSZ1DbEJSKA2/OHA2kgDXXXuf+83X5kynXHvLHOo2zkGuMQzz22JeGSifvXCj+erqwXsZt69NjOpC3o1RYE4ddA7FZFuoZCPktx5/lHJz5Ml4TpFZwjZ45dSiGk6hKO7mWGkOfBNJDvdrgMkG1KFdiTYEcSsv0B7Tvt85qwdrvWimuEYK9lRyubN7QEuUgV040vxFpXSJ8eU7zNHS5g+KKhO7/kCeaO6LSzRmXuDW4DsgO6/Q4kMbciLdxoFXB/56rkvop1ujadL47dUGbXqsxKNj4j5mI6+4XejlRustbmVn9iQkEJAtgfQ3YwWZdCXRNXchLJJ5C6+bZRLOr/FDBleQ== motoki.higa@sbisecsol.com
+
+runcmd:
+  # ディレクトリ作成
+  - mkdir -p /opt/myapp/logs
+  - chown devuser:developers /opt/myapp/logs
+
+  # パッケージ管理 (RHEL系は dnf または yum)
+  - dnf -y update
+  - dnf -y install git wget
+
+# Create a folder
+  - mkdir actions-runner && cd actions-runner
+  - curl -o actions-runner-linux-x64-2.328.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.328.0/actions-runner-linux-x64-2.328.0.tar.gz
+  - tar xzf ./actions-runner-linux-x64-2.328.0.tar.gz
+
+# Create the runner and start the configuration experience
+  - source ./secrets/*
+  - ./config.sh --url https://github.com/higa-private/Azure --token $token
+  - ./run.sh
+
+# Use this YAML in your workflow file for each job
+  - runs-on: self-hosted
