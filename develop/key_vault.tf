@@ -1,4 +1,4 @@
-data "azurerm_client_config" "current" {}
+#data "azurerm_client_config" "current" {}
 
 resource "azurerm_key_vault" "develop" {
   name                       = var.key_vault_name
@@ -10,12 +10,6 @@ resource "azurerm_key_vault" "develop" {
   rbac_authorization_enabled = true
   enabled_for_deployment     = true
 }
-
-#resource "azurerm_role_assignment" "develop_secret_officer" {
-#  scope                = azurerm_key_vault.develop.id
-#  role_definition_name = "Key Vault Secrets Officer"
-#  principal_id         = data.azurerm_client_config.current.object_id
-#}
 
 resource "azurerm_key_vault_secret" "develop_secret" {
   count        = length(var.develop_secret_name)
