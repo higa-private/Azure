@@ -26,6 +26,9 @@ env:
 jobs:
   Terraform_Exec:
     runs-on: [self-hosted, Linux]
+    permissions:
+      contents: read
+      pull-requests: write
     container:
       image: docker.io/library/ubuntu:noble-20250805 #24.04.3 LTS
       volumes:
