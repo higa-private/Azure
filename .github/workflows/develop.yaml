@@ -56,7 +56,7 @@ jobs:
           terraform_version: ${{ env.tf_version }} # Terraformのバージョン指定
 
       - name: Setup tfcmt
-        uses: shmokmt/actions-setup-tfcmt@v4
+        uses: shmokmt/actions-setup-tfcmt@v2
 
       - name: Get Terraform Directory
         id: get_dir
