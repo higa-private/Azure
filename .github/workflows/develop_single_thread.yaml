@@ -9,7 +9,7 @@ env:
   customer_name: "" # 顧名名、PJ名などKeyVault名に付与する
 
   ## 基盤要件
-  resource_group_name: "rg-develop"
+  resource_group_name: "develop-rg"
   backend_storage_account: "develop01"
   backend_container_name: "tfstate20250911"
   backend_key: "terraform.tfstate"

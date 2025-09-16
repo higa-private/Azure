@@ -1,6 +1,6 @@
 resource "azurerm_role_assignment" "vm_identity_subscription_reader" {
   scope                = "/subscriptions/${var.provider_credentials.subscription_id}"
-  role_definition_name = "Reader"
+  role_definition_name = "Contributor"
   principal_id         = azurerm_linux_virtual_machine.vm.identity[0].principal_id
 
   depends_on = [
