@@ -15,17 +15,20 @@ runcmd:
   # 設定を反映
   - sysctl -p
   
-   Azure CLIをインストール
+  # Azure CLIをインストール
   - rpm --import https://packages.microsoft.com/keys/microsoft.asc
   - dnf install -y https://packages.microsoft.com/config/rhel/9.0/packages-microsoft-prod.rpm
   - dnf install -y azure-cli
 
-   Dockerをインストール
+  # Dockerをインストール
   - dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
   - dnf install -y docker-ce docker-ce-cli containerd.io
 
-   GitHub Actions Runner セットアップを実行
+  # GitHub Actions Runner セットアップを実行
   - systemctl enable --now docker
+
+  # dockerコマンド実行時にエラーになるので、Runner実行するユーザーに権限付与
+  - usermod -aG docker azureuser
 
   # ワンライナーで書かないとエラーになる
   - sudo -u azureuser bash -c "
