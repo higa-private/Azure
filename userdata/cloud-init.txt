@@ -1,36 +1,36 @@
-package_update: true
-package_upgrade: all
-
-groups:
-  - develop
-
-users:
-  - name: runner
-    gecos: Developer User
-    groups: develop
-    shell: /bin/bash
-    sudo: ['ALL=(ALL) NOPASSWD:ALL']
-    ssh_authorized_keys:
-      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCrLZp9A8vYyFQGabPFELzUQbqhya02TS3AAL9tftasR4Zvd54DpFiYTzShFixz5aPkXGhn/hSJk4b9R/txQUB0JgG7LBa8ocXuELIYUBk7eXDJPuzoL0AK4o1oo3GmuXhr1iNtHGRdqtVDCeGEWExTQz3hyy2vMPTBdT3yZD7q3HexRnzVl+fnVc7yvAiY7T6O34NPUbRRjTWy4rRSrYo0VOKjam2H21oRuoYqdzUPk0B2tcaGMhHDFyxctct+lfmzC7mZHHVw980vRJPRm6FVP3w3eBN5i8Ty8ZnNrR7VPp7/fkS+spCQSLPOZHgt23x1+JojHVC/nXFvLaJzfVSZ1DbEJSKA2/OHA2kgDXXXuf+83X5kynXHvLHOo2zkGuMQzz22JeGSifvXCj+erqwXsZt69NjOpC3o1RYE4ddA7FZFuoZCPktx5/lHJz5Ml4TpFZwjZ45dSiGk6hKO7mWGkOfBNJDvdrgMkG1KFdiTYEcSsv0B7Tvt85qwdrvWimuEYK9lRyubN7QEuUgV040vxFpXSJ8eU7zNHS5g+KKhO7/kCeaO6LSzRmXuDW4DsgO6/Q4kMbciLdxoFXB/56rkvop1ujadL47dUGbXqsxKNj4j5mI6+4XejlRustbmVn9iQkEJAtgfQ3YwWZdCXRNXchLJJ5C6+bZRLOr/FDBleQ== motoki.higa@sbisecsol.com
-
+#cloud-config
 runcmd:
-  # ディレクトリ作成
-  - mkdir -p /opt/myapp/logs
-  - chown devuser:developers /opt/myapp/logs
+  # SELinuxを一時的に無効化し、設定ファイルを修正
+  - setenforce 0
+  - sed -i 's/SELINUX=enforcing/SELINUX=disabled/' /etc/selinux/config
 
-  # パッケージ管理 (RHEL系は dnf または yum)
-  - dnf -y update
-  - dnf -y install git wget
+  # IPv6を一時的に無効化
+  - sysctl -w net.ipv6.conf.all.disable_ipv6=1
+  - sysctl -w net.ipv6.conf.default.disable_ipv6=1
+  
+  # 設定ファイルを編集
+  - echo "net.ipv6.conf.all.disable_ipv6 = 1" >> /etc/sysctl.conf
+  - echo "net.ipv6.conf.default.disable_ipv6 = 1" >> /etc/sysctl.conf
+  
+  # 設定を反映
+  - sysctl -p
+  
+   Azure CLIをインストール
+  - rpm --import https://packages.microsoft.com/keys/microsoft.asc
+  - dnf install -y https://packages.microsoft.com/config/rhel/9.0/packages-microsoft-prod.rpm
+  - dnf install -y azure-cli
 
-# Create a folder
-  - mkdir actions-runner && cd actions-runner
-  - curl -o actions-runner-linux-x64-2.328.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.328.0/actions-runner-linux-x64-2.328.0.tar.gz
-  - tar xzf ./actions-runner-linux-x64-2.328.0.tar.gz
+   Dockerをインストール
+  - dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+  - dnf install -y docker-ce docker-ce-cli containerd.io
 
-# Create the runner and start the configuration experience
-  - source ./secrets/*
-  - ./config.sh --url https://github.com/higa-private/Azure --token $token
-  - ./run.sh
+   GitHub Actions Runner セットアップを実行
+  - systemctl enable --now docker
 
-# Use this YAML in your workflow file for each job
-  - runs-on: self-hosted
+  # ワンライナーで書かないとエラーになる
+  - sudo -u azureuser bash -c "
+      mkdir -p ~/actions-runner/_work && cd ~/actions-runner && curl -o actions-runner.tar.gz -L https://github.com/actions/runner/releases/download/v2.328.0/actions-runner-linux-x64-2.328.0.tar.gz && tar xzf actions-runner.tar.gz && rm actions-runner.tar.gz && ./config.sh --url https://github.com/higa-private/Azure --token BXBOUNGSRKPL3AMI5P6SGILIZGCBW --unattended --replace
+    "
+  - sudo -u azureuser bash -c "
+    cd ~/actions-runner && sudo ./svc.sh install && sudo ./svc.sh start
+    "

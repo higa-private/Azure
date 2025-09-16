@@ -50,6 +50,8 @@ resource "azurerm_network_interface_security_group_association" "develop_nic_nsg
   network_security_group_id = azurerm_network_security_group.develop_nsg.id
 }
 
+
+
 # Create virtual machine
 resource "azurerm_linux_virtual_machine" "vm" {
   name                            = var.vm_name
@@ -60,7 +62,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
   resource_group_name             = azurerm_resource_group.develop.name
   network_interface_ids           = [azurerm_network_interface.develop_nic.id]
   size                            = "Standard_B2s"
-  #custom_data                     = filebase64("userdata/cloud-init.txt")
+  custom_data                     = filebase64("./userdata/cloud-init.txt")
 
   admin_ssh_key {
     username   = var.admin_username
@@ -87,6 +89,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
   lifecycle {
     ignore_changes = [
       admin_ssh_key,
+      custom_data
     ]
   }
 }
