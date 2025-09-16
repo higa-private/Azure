@@ -48,6 +48,11 @@ jobs:
           apt-get update && apt-get install -y curl unzip sudo                    # 必要なパッケージをインストール
           curl -sL https://aka.ms/InstallAzureCLIDeb | bash                       # 後続のWF処理でAzure CLIが必要なのでインストール
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v3 # Node.jsのインストール
+        with:
+          node-version: ${{ env.node_version }} # Node.jsのバージョン指定
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1 # Terraformのインストール
         with:
@@ -91,10 +96,20 @@ jobs:
           apt-get update && apt-get install -y curl unzip sudo                    # 必要なパッケージをインストール
           curl -sL https://aka.ms/InstallAzureCLIDeb | bash                       # 後続のWF処理でAzure CLIが必要なのでインストール
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v3 # Node.jsのインストール
+        with:
+          node-version: ${{ env.node_version }} # Node.jsのバージョン指定
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1 # Terraformのインストール
         with:
           terraform_version: ${{ env.tf_version }} # Terraformのバージョン指定
+
+      - name: Setup tfcmt
+        uses: shmokmt/actions-setup-tfcmt@v2
+        with:
+          version: v4.14.11
 
       - name: Get Terraform Directory
         id: get_dir
