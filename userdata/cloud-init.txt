@@ -24,11 +24,11 @@ runcmd:
   - dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
   - dnf install -y docker-ce docker-ce-cli containerd.io
 
-  # GitHub Actions Runner セットアップを実行
-  - systemctl enable --now docker
-
   # dockerコマンド実行時にエラーになるので、Runner実行するユーザーに権限付与
   - usermod -aG docker azureuser
+
+  # GitHub Actions Runner セットアップを実行
+  - systemctl enable --now docker
 
   # ワンライナーで書かないとエラーになる
   - sudo -u azureuser bash -c "
