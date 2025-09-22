@@ -57,10 +57,10 @@ jobs:
       - name: Setup OS # コンテナに必要なパッケージをインストール
         shell: bash
         run: |
-          apt-get update && apt-get install -y ca-certificates                    # https通信で必要なので最初にインストール
-          sed -i -e 's/http/https/' /etc/apt/sources.list.d/ubuntu.sources        # Ubuntuのパッケージリポジトリをhttpsに変更
-          apt-get update && apt-get install -y curl unzip sudo                    # 必要なパッケージをインストール
-          curl -sL https://aka.ms/InstallAzureCLIDeb | bash                       # 後続のWF処理でAzure CLIが必要なのでインストール
+          #apt-get update && apt-get install -y ca-certificates                    # https通信で必要なので最初にインストール
+          #sed -i -e 's/http/https/' /etc/apt/sources.list.d/ubuntu.sources        # Ubuntuのパッケージリポジトリをhttpsに変更
+          #apt-get update && apt-get install -y curl unzip sudo                    # 必要なパッケージをインストール
+          #curl -sL https://aka.ms/InstallAzureCLIDeb | bash                       # 後続のWF処理でAzure CLIが必要なのでインストール
 
       - name: Setup Node.js
         uses: actions/setup-node@v3 # Node.jsのインストール
