@@ -35,6 +35,9 @@ jobs:
       volumes:
         # ホストのワークスペースをコンテナにマウント(tfcmt動かすために必要)
         - /home/azureuser/actions-runner/_work:/home/azureuser/actions-runner/_work
+        # コンテナ上でdockerコマンドを実行するために必要
+        - /var/run/docker.sock:/var/run/docker.sock
+        - /usr/bin/docker:/usr/bin/docker
     strategy:
       fail-fast: true
       max-parallel: 5
