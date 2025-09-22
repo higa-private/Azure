@@ -53,7 +53,7 @@ jobs:
           password: ${{ secrets.ACR_PASSWD }}
 
       - name: Checkout Repository
-      - uses: actions/checkout@v2 # リポジトリのコードをコンテナ上にチェックアウト（ダウンロード）
+        uses: actions/checkout@v2 # リポジトリのコードをコンテナ上にチェックアウト（ダウンロード）
 
       - name: Setup OS # コンテナに必要なパッケージをインストール
         shell: bash
