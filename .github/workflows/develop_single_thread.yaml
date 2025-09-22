@@ -50,7 +50,8 @@ jobs:
         with:
           registry: developcicd.azurecr.io
           username: test-token
-          password: ${{ secrets.ACR_PASSWD }}
+          password: r/vj/TeXjLIAWAN0cgdVVZxYoft6tHdCAJwMKmVBcH+ACRA27t5j
+          #password: ${{ secrets.ACR_PASSWD }}
 
       - name: Checkout Repository
         uses: actions/checkout@v2 # リポジトリのコードをコンテナ上にチェックアウト（ダウンロード）
