@@ -11,7 +11,7 @@ resource "azurerm_key_vault" "develop" {
   enabled_for_deployment     = true
 }
 
-resource "azurerm_role_assignment" "key_vault_contributor" {
+resource "azurerm_role_assignment" "key_vault_officer" {
   scope                = azurerm_key_vault.develop.id
   role_definition_name = "Key Vault Secrets Officer"
   principal_id         = data.azurerm_client_config.current.object_id
@@ -29,7 +29,7 @@ resource "azurerm_key_vault_secret" "develop_secret" {
   key_vault_id = azurerm_key_vault.develop.id
 
   depends_on = [
-    azurerm_role_assignment.key_vault_contributor
+    azurerm_role_assignment.key_vault_officer
   ]
 
   lifecycle {
@@ -38,4 +38,20 @@ resource "azurerm_key_vault_secret" "develop_secret" {
       value,
     ]
   }
+}
+
+# VMのマネージドIDにロールを割り当てるリソース
+resource "azurerm_role_assignment" "vm_keyvault_secrets_reader" {
+  # 割り当てのスコープはKey Vault
+  scope                = azurerm_key_vault.develop.id
+  # 割り当てるロール名
+  role_definition_name = "Key Vault Secrets Officer"
+  # 割り当てる対象はVMのマネージドIDのプリンシパルID
+  principal_id         = azurerm_linux_virtual_machine.vm.identity[0].principal_id
+
+  # 依存関係を明示
+  depends_on = [
+    azurerm_key_vault.develop,
+    azurerm_linux_virtual_machine.vm
+  ]
 }
