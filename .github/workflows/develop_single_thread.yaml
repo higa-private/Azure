@@ -67,12 +67,12 @@ jobs:
         tf_working_dir: # WFを実行するTerraformディレクトリを指定
           - develop
     steps:
-      - name: Azure Container Registry Login
-        uses: docker/login-action@v2
-        with:
-          registry: developcicd.azurecr.io
-          username: test-token
-          password: "${{ secrets.ACR_PASSWD }}"
+      #      - name: Azure Container Registry Login
+      #        uses: docker/login-action@v2
+      #        with:
+      #          registry: developcicd.azurecr.io
+      #          username: test-token
+      #          password: "${{ secrets.ACR_PASSWD }}"
 
       - name: Checkout Repository
         uses: actions/checkout@v2 # リポジトリのコードをコンテナ上にチェックアウト（ダウンロード）
