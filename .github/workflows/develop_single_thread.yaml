@@ -30,8 +30,7 @@ jobs:
   ACR_Login:
     runs-on: [self-hosted, Linux]
     outputs:
-      acr_password1: ${{ steps.get_password.outputs.acr_password }}
-      myVariable: ${{ steps.set_output.outputs.value }}
+      acr_password: ${{ steps.get_password.outputs.acr_password }}
     steps:
       - name: Azure Login
         shell: bash
@@ -42,12 +41,8 @@ jobs:
         id: get_password
         shell: bash
         run: |
-          echo "acr_password=$(az acr credential show --name ${{ env.acr_name }} --query passwords[0].value -o tsv )" 
-          echo "acr_password=$(az acr credential show --name ${{ env.acr_name }} --query passwords[0].value -o tsv )" >> $GITHUB_OUTPUT
-
-      - name: Outputを設定
-        id: set_output
-        run: echo "value=Hello, GitHub Actions!" >> $GITHUB_OUTPUT
+          SECRET_VALUE="$(az acr credential show --name ${{ env.acr_name }} --query passwords[0].value -o tsv )" 
+          echo "acr_password=$SECRET_VALUE" >> $GITHUB_OUTPUT
 
   Terraform_Exec:
     needs: ACR_Login
@@ -79,7 +74,7 @@ jobs:
       - name: Setup OS # コンテナに必要なパッケージをイ"job1からの出力: ${{ needs.job1.outputs.myVariable }}"ンストール
         shell: bash
         run: |
-          echo "job1からの出力: ${{ needs.ACR_Login.outputs.myVariable }}"
+          echo ${{ needs.ACR_Login.outputs.acr_password }}"
           #apt-get update && apt-get install -y ca-certificates                    # https通信で必要なので最初にインストール
           #sed -i -e 's/http/https/' /etc/apt/sources.list.d/ubuntu.sources        # Ubuntuのパッケージリポジトリをhttpsに変更
           #apt-get update && apt-get install -y curl unzip sudo                    # 必要なパッケージをインストール
