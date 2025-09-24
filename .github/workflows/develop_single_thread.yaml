@@ -20,7 +20,7 @@ env:
   key_vault_sp_id: "sp-client-id"
   key_vault_sp_secret: "sp-client-secret"
   # ACR設定
-  acr_name: "developcicd"
+  acr_name: "developcicd.azurecr.io"
 
   # ツールバージョン
   tf_version: "1.5.4"
