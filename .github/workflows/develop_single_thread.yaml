@@ -13,30 +13,53 @@ env:
   backend_storage_account: "develop01"
   backend_container_name: "tfstate20250911"
   backend_key: "terraform.tfstate"
+  # Azure Key Vault設定
   key_vault: "terraform20250909"
-  # AzureのKeyVaultから取得する秘密情報の名前リスト（customer_name + "_" + 以下の名前でKeyVaultに登録されている想定）
   key_vault_subscription: "subscription-id"
   key_vault_tenant: "tenant-id"
   key_vault_sp_id: "sp-client-id"
   key_vault_sp_secret: "sp-client-secret"
+  # ACR設定
+  acr_name: "developcicd"
+
   # ツールバージョン
   tf_version: "1.5.4"
   node_version: "20.x"
 
 jobs:
+  ACR_Login:
+    runs-on: [self-hosted, Linux]
+    outputs:
+      acr_password: ${{ steps.get_password.outputs.acr_password }}
+    steps:
+      - name: Azure Login
+        shell: bash
+        run: |
+          az login --identity 1> /dev/null
+
+      - name: Azure Container Registry Login
+        id: get_password
+        shell: bash
+        run: |
+          echo "acr_password=$(az acr credential show --name ${{ env.acr_name }} --query passwords[0].value -o tsv )" >> $GITHUB_OUTPUT
+
   Terraform_Exec:
+    needs: ACR_Login
     runs-on: [self-hosted, Linux]
     permissions:
       contents: read
       pull-requests: write
     container:
-      image: developcicd.azurecr.io/ubuntu-test:latest #24.04.3 LTS
+      image: ${{ env.acr_name }}/ubuntu-test:latest #24.04.3 LTS
       volumes:
         # ホストのワークスペースをコンテナにマウント(tfcmt動かすために必要)
         - /home/azureuser/actions-runner/_work:/home/azureuser/actions-runner/_work
         # コンテナ上でdockerコマンドを実行するために必要
         - /var/run/docker.sock:/var/run/docker.sock
         - /usr/bin/docker:/usr/bin/docker
+      credentials:
+        username: test-token
+        password: ${{ needs.ACR_Login.outputs.acr_password }}
     strategy:
       fail-fast: true
       max-parallel: 5

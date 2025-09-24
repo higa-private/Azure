@@ -32,6 +32,9 @@ $ az storage blob upload \
       --name terraform.tfstate \
       --file ./terraform.tfstate   
 
+## キーコンテナの値修正（Terraformで作成後に実行）
+    az keyvault secret set --vault-name <KeyVault名> --name <シークレット名> --value "<新しい値>"
+
 # HostOSに必要な設定
 １．AzureCLIをインストール
     参考サイト：https://learn.microsoft.com/ja-jp/cli/azure/install-azure-cli-linux?view=azure-cli-latest&pivots=dnf
