@@ -29,19 +29,19 @@ env:
 jobs:
   ACR_Login:
     runs-on: [self-hosted, Linux]
-        outputs:
-          acr_password: ${{ steps.get_password.outputs.acr_password }}
+    outputs:
+      acr_password: ${{ steps.get_password.outputs.acr_password }}
     steps:
       - name: Azure Login
         shell: bash
         run: |
           az login --identity 1> /dev/null
 
-        - name: Azure Container Registry Login
-          id: get_password
-          shell: bash
-          run: |
-            echo "acr_password=$(az acr credential show --name ${{ env.acr_name }} --query passwords[0].value -o tsv )" >> $GITHUB_OUTPUT
+      - name: Azure Container Registry Login
+        id: get_password
+        shell: bash
+        run: |
+          echo "acr_password=$(az acr credential show --name ${{ env.acr_name }} --query passwords[0].value -o tsv )" >> $GITHUB_OUTPUT
 
   Terraform_Exec:
     needs: ACR_Login
