@@ -50,7 +50,7 @@ jobs:
       contents: read
       pull-requests: write
     container:
-      image: ${{ env.acr_name }}/ubuntu-test:latest #24.04.3 LTS
+      image: developcicd.azurecr.io/ubuntu-test:latest #24.04.3 LTS
       volumes:
         # ホストのワークスペースをコンテナにマウント(tfcmt動かすために必要)
         - /home/azureuser/actions-runner/_work:/home/azureuser/actions-runner/_work
