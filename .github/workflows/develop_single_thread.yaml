@@ -73,7 +73,7 @@ jobs:
       - name: Setup OS # コンテナに必要なパッケージをインストール
         shell: bash
         run: |
-          echo ${{ steps.get_password.outputs.acr_password }}
+          echo ${{ needs.ACR_Ligin.outputs.acr_password }}
           #apt-get update && apt-get install -y ca-certificates                    # https通信で必要なので最初にインストール
           #sed -i -e 's/http/https/' /etc/apt/sources.list.d/ubuntu.sources        # Ubuntuのパッケージリポジトリをhttpsに変更
           #apt-get update && apt-get install -y curl unzip sudo                    # 必要なパッケージをインストール
