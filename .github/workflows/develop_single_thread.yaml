@@ -29,19 +29,19 @@ env:
 jobs:
   ACR_Login:
     runs-on: [self-hosted, Linux]
-    outputs:
-      acr_password: ${{ steps.get_password.outputs.acr_password }}
+    #    outputs:
+    #      acr_password: ${{ steps.get_password.outputs.acr_password }}
     steps:
       - name: Azure Login
         shell: bash
         run: |
           az login --identity 1> /dev/null
 
-      - name: Azure Container Registry Login
-        id: get_password
-        shell: bash
-        run: |
-          echo "acr_password=$(az acr credential show --name ${{ env.acr_name }} --query passwords[0].value -o tsv )" > ~/credentials.txt
+  #      - name: Azure Container Registry Login
+  #        id: get_password
+  #        shell: bash
+  #        run: |
+  #          echo "acr_password=$(az acr credential show --name ${{ env.acr_name }} --query passwords[0].value -o tsv )" > ~/credentials.txt
 
   Terraform_Exec:
     needs: ACR_Login
@@ -51,15 +51,15 @@ jobs:
       pull-requests: write
     container:
       image: developcicd.azurecr.io/ubuntu-test:latest #24.04.3 LTS
+      credentials:
+        username: test-token
+        password: ${{ secrets.ACR_PASSWD }}
       volumes:
         # ホストのワークスペースをコンテナにマウント(tfcmt動かすために必要)
         - /home/azureuser/actions-runner/_work:/home/azureuser/actions-runner/_work
         # コンテナ上でdockerコマンドを実行するために必要
         - /var/run/docker.sock:/var/run/docker.sock
         - /usr/bin/docker:/usr/bin/docker
-      credentials:
-        username: test-token
-        password: ${ secrets.ACR_PASSWD }
     strategy:
       fail-fast: true
       max-parallel: 5
