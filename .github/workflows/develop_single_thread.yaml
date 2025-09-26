@@ -53,8 +53,8 @@ jobs:
     container:
       image: developcicd.azurecr.io/ubuntu-test:latest #24.04.3 LTS
       credentials:
-        username: test-token
-        password: ${{ secrets.ACR_PASSWD }}
+        username: developcicd
+        password: ${{ needs.ACR_Login.outputs.acr_password }}
       volumes:
         # ホストのワークスペースをコンテナにマウント(tfcmt動かすために必要)
         - /home/azureuser/actions-runner/_work:/home/azureuser/actions-runner/_work
