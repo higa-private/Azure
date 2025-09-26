@@ -37,7 +37,8 @@ jobs:
         shell: bash
         run: |
           echo "acr_password=$(az acr credential show --name ${{ env.acr_name }} --query passwords[0].value -o tsv )" >> $GITHUB_OUTPUT
-          echo "acr_password=$(az acr credential show --name ${{ env.acr_name }} --query passwords[0].value -o tsv )" 
+          echo "acr_password=$(az acr credential show --name ${{ env.acr_name }} "
+
 #  Terraform_Exec:
 #    needs: ACR_Login
 #    runs-on: [self-hosted, Linux]
@@ -88,7 +89,7 @@ jobs:
 #        id: get_dir
 #        shell: bash # Shellをbashに指定しないと{}での境変数展開ができない （後続も同じ理由なので説明は割愛）
 #        run: |
-#          cd ${{ matrix.tf_working_dir }} 
+#          cd ${{ matrix.tf_working_dir }}
 #          echo "tf_region_dir=$(pwd)" >> $GITHUB_OUTPUT
 #      - name: Terraform fmt # Terraformコードのフォーマットチェック
 #        run: terraform fmt -recursive
