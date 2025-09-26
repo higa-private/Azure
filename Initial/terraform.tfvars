@@ -65,8 +65,8 @@ os_disk_size_gb   = 30
 data_disk_size_gb = 10
 
 # key_vault
-key_vault_name     = "terraform20250909"
-key_permissions    = ["get", "list", "create", "delete", "recover", "backup", "restore", "import", "update", "getrotationpolicy", "setrotationpolicy", "rotate"]
+key_vault_name    = "terraform20250909"
+key_permissions   = ["get", "list", "create", "delete", "recover", "backup", "restore", "import", "update", "getrotationpolicy", "setrotationpolicy", "rotate"]
 secret_permissions = ["get", "list", "set", "delete", "recover", "backup", "restore"]
 # key_vault_key
-develop_secret_name = ["subscription-id", "tenant-id", "sp-client-id", "sp-client-secret"]
+develop_secret_name = ["subscription-id", "tenant-id", "sp-client-id", "sp-client-secret"] 

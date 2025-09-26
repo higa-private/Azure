@@ -3,3 +3,6 @@
 develop/.*
 *tfstate*
 *tfstate
+*/.terraform/
+*/.terraform*
+

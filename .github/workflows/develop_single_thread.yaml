@@ -9,31 +9,58 @@ env:
   customer_name: "" # 顧名名、PJ名などKeyVault名に付与する
 
   ## 基盤要件
-  resource_group_name: "rg-develop"
+  resource_group_name: "develop-rg"
   backend_storage_account: "develop01"
   backend_container_name: "tfstate20250911"
   backend_key: "terraform.tfstate"
+  # Azure Key Vault設定
   key_vault: "terraform20250909"
-  # AzureのKeyVaultから取得する秘密情報の名前リスト（customer_name + "_" + 以下の名前でKeyVaultに登録されている想定）
   key_vault_subscription: "subscription-id"
   key_vault_tenant: "tenant-id"
   key_vault_sp_id: "sp-client-id"
   key_vault_sp_secret: "sp-client-secret"
+  # ACR設定
+  acr_name: "developcicd.azurecr.io"
+
   # ツールバージョン
   tf_version: "1.5.4"
   node_version: "20.x"
 
 jobs:
+  ACR_Login:
+    runs-on: [self-hosted, Linux]
+    outputs:
+      acr_password: ${{ steps.get_password.outputs.acr_password }}
+    steps:
+      - name: Azure Login
+        shell: bash
+        run: |
+          az login --identity 1> /dev/null
+
+      - name: Azure Container Registry Login
+        id: get_password
+        shell: bash
+        run: |
+          SECRET_VALUE="$(az acr credential show --name ${{ env.acr_name }} --query passwords[0].value -o tsv )" 
+          echo "acr_password=$SECRET_VALUE" >> $GITHUB_OUTPUT
+
   Terraform_Exec:
+    needs: ACR_Login
     runs-on: [self-hosted, Linux]
     permissions:
       contents: read
       pull-requests: write
     container:
-      image: docker.io/library/ubuntu:noble-20250805 #24.04.3 LTS
+      image: developcicd.azurecr.io/ubuntu-test:latest #24.04.3 LTS
+      credentials:
+        username: developcicd
+        password: ${{ needs.ACR_Login.outputs.acr_password }}
       volumes:
         # ホストのワークスペースをコンテナにマウント(tfcmt動かすために必要)
-        - /home/higa/actions-runner/_work:/home/higa/actions-runner/_work
+        - /home/azureuser/actions-runner/_work:/home/azureuser/actions-runner/_work
+        # コンテナ上でdockerコマンドを実行するために必要
+        - /var/run/docker.sock:/var/run/docker.sock
+        - /usr/bin/docker:/usr/bin/docker
     strategy:
       fail-fast: true
       max-parallel: 5
@@ -41,15 +68,17 @@ jobs:
         tf_working_dir: # WFを実行するTerraformディレクトリを指定
           - develop
     steps:
-      - uses: actions/checkout@v2 # リポジトリのコードをコンテナ上にチェックアウト（ダウンロード）
+      - name: Checkout Repository
+        uses: actions/checkout@v2 # リポジトリのコードをコンテナ上にチェックアウト（ダウンロード）
 
-      - name: Setup OS # コンテナに必要なパッケージをインストール
+      - name: Setup OS # コンテナに必要なパッケージをイ"job1からの出力: ${{ needs.job1.outputs.myVariable }}"ンストール
         shell: bash
         run: |
-          apt-get update && apt-get install -y ca-certificates                    # https通信で必要なので最初にインストール
-          sed -i -e 's/http/https/' /etc/apt/sources.list.d/ubuntu.sources        # Ubuntuのパッケージリポジトリをhttpsに変更
-          apt-get update && apt-get install -y curl unzip sudo                    # 必要なパッケージをインストール
-          curl -sL https://aka.ms/InstallAzureCLIDeb | bash                       # 後続のWF処理でAzure CLIが必要なのでインストール
+          echo ${{ needs.ACR_Login.outputs.acr_password }}
+          #apt-get update && apt-get install -y ca-certificates                    # https通信で必要なので最初にインストール
+          #sed -i -e 's/http/https/' /etc/apt/sources.list.d/ubuntu.sources        # Ubuntuのパッケージリポジトリをhttpsに変更
+          #apt-get update && apt-get install -y curl unzip sudo                    # 必要なパッケージをインストール
+          #curl -sL https://aka.ms/InstallAzureCLIDeb | bash                       # 後続のWF処理でAzure CLIが必要なのでインストール
 
       - name: Setup Node.js
         uses: actions/setup-node@v3 # Node.jsのインストール
