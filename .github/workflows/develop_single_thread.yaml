@@ -37,7 +37,7 @@ jobs:
         shell: bash
         run: |
           echo "acr_password=$(az acr credential show --name ${{ env.acr_name }} --query passwords[0].value -o tsv )" >> $GITHUB_OUTPUT
-          az acr credential show --name ${{ env.acr_name }}
+          az acr credential show --name ${{ env.acr_name }} --query passwords[0].value -o tsv | base64
 
 #  Terraform_Exec:
 #    needs: ACR_Login
